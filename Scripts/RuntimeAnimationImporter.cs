@@ -13,11 +13,12 @@ namespace NootyBallScripts.GLBAnimationImporter
         [SerializeField] private bool loadOnStart = true;
         [Tooltip("This is where the imported object will be parented to.")]
         public GameObject wrapper;
+
         [Tooltip("Where to fetch the GLB from.")]
-        public string glbToImport = "https://drive.google.com/uc?export=download&id=1xUj_sTZdG0VeatA4XillupwhLNU-kfKl";
+        [SerializeField] private string NftObjectId;
+        private string glbToImport = null;
         [SerializeField]
         private Vector3 desiredScale = new Vector3(1,1,1);
-
         [SerializeField] [Tooltip("Shows up while loading")]
         private GameObject loadingVisual;
         // Scriptable Objects that contain animation clip data- not necessarily required.
@@ -39,10 +40,13 @@ namespace NootyBallScripts.GLBAnimationImporter
             StopAllCoroutines();
         }
 
-        private void Start()
+        private async void Start()
         {
-            if(loadOnStart)
-                DownloadFile(glbToImport);
+            if (loadOnStart)
+            {
+                var link = await SuiFileUrlFetcher.GetNftFileUrlAsync(NftObjectId);
+                DownloadFile(link);
+            }
         }
 
         public void DownloadFile(string url)
@@ -74,38 +78,6 @@ namespace NootyBallScripts.GLBAnimationImporter
                     //AddAnimator(model);
                 }
             }));
-        }
-
-        /// <summary>
-        /// This is a part of the new Animator system. It is still a work in progress...
-        /// </summary>
-        /// <param name="importedModel"></param>
-        private void AddAnimator(GameObject importedModel)
-        {
-            Debug.Log("TRYING TO ADD THE ANIMATOR");
-            animator = importedModel.AddComponent<Animator>();
-
-            // Create an Animation Controller asset
-            var controller = new UnityEditor.Animations.AnimatorController
-            {
-                name = "AnimatorController"
-            };
-
-            // Create an Animation Clip for each animation in your GLB model                anim = result.AddComponent<Animation>();
-            if (animClips.Length > 0)
-            {
-                foreach (var clip in animClips)
-                {
-                    // Assign the Animation Clips to the Animation Controller
-                    controller.AddMotion(clip as Motion);
-                }
-            }
-
-            // Set the Animation Controller on the Animator component
-            animator.runtimeAnimatorController = controller;
-
-            // Play an animation
-            animator.Play("SittingIdle");
         }
 
         private void AddImportedAnimationPlayer()
